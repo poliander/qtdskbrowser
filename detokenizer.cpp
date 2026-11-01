@@ -1,4 +1,4 @@
-#include "basictoken.h"
+#include "detokenizer.h"
 
 #include <QHash>
 #include <cmath>
@@ -202,9 +202,19 @@ QString detokenizeLine(const QByteArray &tokens)
             break; // end of line
         }
         if (code == 0x01) {
-            flushRawRun();
-            appendToken(line, ":");
-            ++i;
+            // The "'" comment token (0xC0) and ELSE (0x97) are always stored
+            // with this separator immediately before them, even when no
+            // colon was actually typed (e.g. a comment as a line's only
+            // statement, or IF...THEN...ELSE); LIST does not reproduce that
+            // implicit colon, so skip it too.
+            quint8 next = i + 1 < tokens.size() ? static_cast<quint8>(tokens.at(i + 1)) : 0;
+            if (next == 0xC0 || next == 0x97) {
+                ++i;
+            } else {
+                flushRawRun();
+                appendToken(line, ":");
+                ++i;
+            }
         } else if (code == 0x09) {
             flushRawRun();
             line += QChar(0x09);

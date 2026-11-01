@@ -1,5 +1,5 @@
-#include "basictoken.h"
-#include "cpclistingview.h"
+#include "detokenizer.h"
+#include "basicviewer.h"
 #include "dskimage.h"
 
 #include <QAction>

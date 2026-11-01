@@ -1,4 +1,4 @@
-#include "cpclistingview.h"
+#include "basicviewer.h"
 #include "cpcglyphs.h"
 
 #include <QClipboard>

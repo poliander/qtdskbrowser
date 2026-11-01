@@ -14,10 +14,10 @@ add_executable(qtdskbrowser
     main.cpp
     dskimage.cpp
     dskimage.h
-    basictoken.cpp
-    basictoken.h
-    cpclistingview.cpp
-    cpclistingview.h
+    detokenizer.cpp
+    detokenizer.h
+    basicviewer.cpp
+    basicviewer.h
     cpcglyphs.h
 )
 
