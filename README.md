@@ -6,6 +6,8 @@ files directly from the disk, and detokenises/decrypts them (including
 AMSDOS "protected" BASIC) for display in an authentic CPC-style view using
 the original character ROM font.
 
+![qtdskbrowser screenshot](resources/screenshot.png)
+
 ## Requirements
 
 - A C++17 compiler (GCC or Clang)
