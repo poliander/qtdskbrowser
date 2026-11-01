@@ -1,0 +1,51 @@
+name: Windows Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  # The qt6-docker image only publishes mingw (Windows) kits up to Qt 6.7;
+  # bump this once a newer one becomes available.
+  QT_DOCKER_IMAGE: stateoftheartio/qt6:6.7-mingw-aqt
+
+permissions:
+  contents: write
+
+jobs:
+  windows-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cross-compile Windows binary
+        run: |
+          mkdir -p dist
+          chmod 777 dist
+          docker run --rm \
+            -v "$PWD:/home/user/project:ro" \
+            -v "$PWD/dist:/home/user/dist" \
+            "$QT_DOCKER_IMAGE" sh -c '
+              set -e
+              qt-cmake /home/user/project -G Ninja -B /home/user/build
+              cmake --build /home/user/build
+              cmake --install /home/user/build --prefix /home/user/dist
+              cd /home/user/dist/bin
+              windeployqt qtdskbrowser.exe
+            '
+
+      - name: Package release archive
+        run: |
+          cd dist/bin
+          zip -r "$GITHUB_WORKSPACE/qtdskbrowser-${GITHUB_REF_NAME}-windows-x64.zip" .
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            "qtdskbrowser-${GITHUB_REF_NAME}-windows-x64.zip" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes
