@@ -18,6 +18,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QMessageBox>
+#include <QScreen>
 #include <QScrollArea>
 #include <QSplitter>
 #include <QStackedWidget>
@@ -153,7 +154,10 @@ int main(int argc, char *argv[])
 
     QMainWindow window;
     window.setWindowTitle("qtdskbrowser");
-    window.resize(900, 600);
+
+    int windowHeight = QGuiApplication::primaryScreen()->availableGeometry().height() * 2 / 3;
+    int windowWidth = windowHeight * 3 / 2;
+    window.resize(windowWidth, windowHeight);
 
     QIcon appIcon = QIcon::fromTheme("media-floppy",
         app.style()->standardIcon(QStyle::SP_DriveFDIcon));
@@ -368,7 +372,7 @@ int main(int argc, char *argv[])
     QAction *quitAction = fileMenu->addAction(quitIcon, "Quit");
     QObject::connect(quitAction, &QAction::triggered, &app, &QApplication::quit);
 
-    window.showMaximized();
+    window.show();
 
     const QStringList args = app.arguments();
     if (args.size() > 1)
