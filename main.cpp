@@ -321,6 +321,33 @@ int main(int argc, char *argv[])
         updateStatusLabel(index); // in case addTab() already made this tab current, before tab data was set
     });
 
+    tree->setContextMenuPolicy(Qt::CustomContextMenu);
+    QObject::connect(tree, &QTreeWidget::customContextMenuRequested, tree, [&window, tree](const QPoint &pos) {
+        QTreeWidgetItem *item = tree->itemAt(pos);
+        if (!item || !item->parent())
+            return; // no item under the cursor, or a "USER n" group node
+
+        int fileIndex = item->data(0, Qt::UserRole).toInt();
+        const DskFileEntry &fileEntry = currentImage.files().at(fileIndex);
+        QString defaultName = fileEntry.extension.isEmpty() ? fileEntry.name
+                                                              : fileEntry.name + "." + fileEntry.extension;
+
+        QMenu menu;
+        QAction *saveAsAction = menu.addAction("Save as...");
+        QObject::connect(saveAsAction, &QAction::triggered, &window, [&window, fileIndex, defaultName]() {
+            QString savePath = QFileDialog::getSaveFileName(&window, "Save File As", defaultName);
+            if (savePath.isEmpty())
+                return;
+
+            QByteArray content = currentImage.fileContent(fileIndex);
+            QFile file(savePath);
+            if (!file.open(QIODevice::WriteOnly) || file.write(content) != content.size()) {
+                QMessageBox::warning(&window, "qtdskbrowser", "Could not save file:\n" + savePath);
+            }
+        });
+        menu.exec(tree->viewport()->mapToGlobal(pos));
+    });
+
     auto openFile = [&window, tree, outerStack, splitter, tabs, fileNameLabel](const QString &filePath) {
         QFile file(filePath);
         if (!file.open(QIODevice::ReadOnly)) {
