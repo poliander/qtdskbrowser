@@ -1,0 +1,10 @@
+Amstrad CPC character ROM font data
+https://github.com/robhagemans/hoard-of-bitfonts (amstrad/amstrad_cpc.yaff)
+
+The 8x8 pixel bitmaps in cpcglyphs.h are the Amstrad CPC's actual character
+ROM font, as extracted from the WinAPE emulator (www.winape.net), not a
+modern recreation. Per that repository's LICENSE.md: bitmap typeface designs
+are not independently copyrightable in the US, and any UK design-right term
+for this 1984/85 font has long since expired. The repository's own
+representation of these glyphs is additionally released under CC0 1.0
+Universal (https://creativecommons.org/publicdomain/zero/1.0/).

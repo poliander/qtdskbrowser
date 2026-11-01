@@ -1,0 +1,49 @@
+# Build-Verzeichnisse
+build/
+build-*/
+cmake-build-*/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+Testing/
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps/
+
+# Qt
+*.autosave
+moc_*.cpp
+moc_*.h
+qrc_*.cpp
+ui_*.h
+*.qmlc
+*.jsc
+Makefile*
+*build-*
+.qmake.stash
+*.pro.user
+*.pro.user.*
+
+# Objekt- und Binärdateien
+*.o
+*.obj
+*.a
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*~
+
+# Sonstiges
+*.log
