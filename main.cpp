@@ -167,6 +167,9 @@ int main(int argc, char *argv[])
     QIcon openIcon = QIcon::fromTheme("document-open",
         app.style()->standardIcon(QStyle::SP_DialogOpenButton));
 
+    QIcon saveAsIcon = QIcon::fromTheme("document-save-as",
+        app.style()->standardIcon(QStyle::SP_DialogSaveButton));
+
     QToolButton *placeholderButton = new QToolButton;
     placeholderButton->setIcon(openIcon);
     placeholderButton->setIconSize(QSize(96, 96));
@@ -322,7 +325,7 @@ int main(int argc, char *argv[])
     });
 
     tree->setContextMenuPolicy(Qt::CustomContextMenu);
-    QObject::connect(tree, &QTreeWidget::customContextMenuRequested, tree, [&window, tree](const QPoint &pos) {
+    QObject::connect(tree, &QTreeWidget::customContextMenuRequested, tree, [&window, tree, saveAsIcon](const QPoint &pos) {
         QTreeWidgetItem *item = tree->itemAt(pos);
         if (!item || !item->parent())
             return; // no item under the cursor, or a "USER n" group node
@@ -333,7 +336,7 @@ int main(int argc, char *argv[])
                                                               : fileEntry.name + "." + fileEntry.extension;
 
         QMenu menu;
-        QAction *saveAsAction = menu.addAction("Save as...");
+        QAction *saveAsAction = menu.addAction(saveAsIcon, "Save as...");
         QObject::connect(saveAsAction, &QAction::triggered, &window, [&window, fileIndex, defaultName]() {
             QString savePath = QFileDialog::getSaveFileName(&window, "Save File As", defaultName);
             if (savePath.isEmpty())
