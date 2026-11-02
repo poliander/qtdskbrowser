@@ -14,10 +14,10 @@
 // QScrollArea (with setWidgetResizable(true)) learn how tall the wrapped
 // content needs to be for a given width *before* committing to a size, so
 // it can show a vertical scrollbar instead of clipping overflowing content.
-class CpcListingView : public QWidget
+class BasicViewer : public QWidget
 {
 public:
-    explicit CpcListingView(QWidget *parent = nullptr);
+    explicit BasicViewer(QWidget *parent = nullptr);
 
     void setText(const QString &text);
 

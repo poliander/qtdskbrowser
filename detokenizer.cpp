@@ -319,7 +319,7 @@ QString detokenizeLine(const QByteArray &tokens)
 
 } // namespace
 
-QString detokenizeBasic(const QByteArray &data)
+QString detokenize(const QByteArray &data)
 {
     QStringList lines;
     int pos = 0;

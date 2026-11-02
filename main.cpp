@@ -306,9 +306,9 @@ int main(int argc, char *argv[])
 
         bool isTokenized = false;
         QByteArray content = currentImage.fileContent(fileIndex, &isTokenized);
-        QString text = isTokenized ? detokenizeBasic(content) : QString::fromLatin1(content);
+        QString text = isTokenized ? detokenize(content) : QString::fromLatin1(content);
 
-        CpcListingView *viewer = new CpcListingView;
+        BasicViewer *viewer = new BasicViewer;
         viewer->setText(text);
 
         QScrollArea *scrollArea = new QScrollArea;

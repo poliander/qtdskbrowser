@@ -54,7 +54,7 @@ void normalizedSelection(QPoint a, QPoint b, QPoint *start, QPoint *end)
 
 } // namespace
 
-CpcListingView::CpcListingView(QWidget *parent)
+BasicViewer::BasicViewer(QWidget *parent)
     : QWidget(parent)
 {
     QSizePolicy policy = sizePolicy();
@@ -66,7 +66,7 @@ CpcListingView::CpcListingView(QWidget *parent)
     rebuildImage(QSize(0, 0));
 }
 
-int CpcListingView::heightForWidth(int width) const
+int BasicViewer::heightForWidth(int width) const
 {
     if (width <= 0)
         return -1;
@@ -75,7 +75,7 @@ int CpcListingView::heightForWidth(int width) const
     return rows * kCellHeight;
 }
 
-void CpcListingView::setText(const QString &text)
+void BasicViewer::setText(const QString &text)
 {
     m_text = text;
     rebuildImage(size());
@@ -83,7 +83,7 @@ void CpcListingView::setText(const QString &text)
     update();
 }
 
-void CpcListingView::resizeEvent(QResizeEvent *event)
+void BasicViewer::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
     rebuildImage(event->size());
@@ -91,7 +91,7 @@ void CpcListingView::resizeEvent(QResizeEvent *event)
     update();
 }
 
-void CpcListingView::rebuildImage(QSize widgetSize)
+void BasicViewer::rebuildImage(QSize widgetSize)
 {
     QStringList lines;
     int columns;
@@ -150,7 +150,7 @@ void CpcListingView::rebuildImage(QSize widgetSize)
     }
 }
 
-void CpcListingView::paintEvent(QPaintEvent *)
+void BasicViewer::paintEvent(QPaintEvent *)
 {
     QPainter painter(this);
     painter.setRenderHint(QPainter::SmoothPixmapTransform, false);
@@ -177,7 +177,7 @@ void CpcListingView::paintEvent(QPaintEvent *)
     }
 }
 
-QPoint CpcListingView::textPositionAt(const QPoint &pixelPos) const
+QPoint BasicViewer::textPositionAt(const QPoint &pixelPos) const
 {
     if (m_lines.isEmpty())
         return QPoint(0, 0);
@@ -187,7 +187,7 @@ QPoint CpcListingView::textPositionAt(const QPoint &pixelPos) const
     return QPoint(col, row);
 }
 
-QString CpcListingView::selectedText() const
+QString BasicViewer::selectedText() const
 {
     if (!m_hasSelection)
         return QString();
@@ -206,14 +206,14 @@ QString CpcListingView::selectedText() const
     return result.join('\n');
 }
 
-void CpcListingView::copySelectionToClipboard()
+void BasicViewer::copySelectionToClipboard()
 {
     QString text = selectedText();
     if (!text.isEmpty())
         QGuiApplication::clipboard()->setText(text);
 }
 
-void CpcListingView::mousePressEvent(QMouseEvent *event)
+void BasicViewer::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() != Qt::LeftButton) {
         QWidget::mousePressEvent(event);
@@ -227,7 +227,7 @@ void CpcListingView::mousePressEvent(QMouseEvent *event)
     update();
 }
 
-void CpcListingView::mouseMoveEvent(QMouseEvent *event)
+void BasicViewer::mouseMoveEvent(QMouseEvent *event)
 {
     if (!m_selecting) {
         QWidget::mouseMoveEvent(event);
@@ -238,7 +238,7 @@ void CpcListingView::mouseMoveEvent(QMouseEvent *event)
     update();
 }
 
-void CpcListingView::mouseReleaseEvent(QMouseEvent *event)
+void BasicViewer::mouseReleaseEvent(QMouseEvent *event)
 {
     if (event->button() != Qt::LeftButton || !m_selecting) {
         QWidget::mouseReleaseEvent(event);
@@ -250,7 +250,7 @@ void CpcListingView::mouseReleaseEvent(QMouseEvent *event)
     update();
 }
 
-void CpcListingView::keyPressEvent(QKeyEvent *event)
+void BasicViewer::keyPressEvent(QKeyEvent *event)
 {
     if (event->matches(QKeySequence::Copy)) {
         copySelectionToClipboard();
