@@ -31,7 +31,9 @@ add_executable(qtdskbrowser
     detokenizer.h
     basicviewer.cpp
     basicviewer.h
-    cpcglyphs.h
+    hexviewer.cpp
+    hexviewer.h
+    glyphs.h
 )
 
 target_link_libraries(qtdskbrowser PRIVATE Qt6::Widgets)

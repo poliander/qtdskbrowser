@@ -1,5 +1,5 @@
 #include "basicviewer.h"
-#include "cpcglyphs.h"
+#include "glyphs.h"
 
 #include <QClipboard>
 #include <QGuiApplication>
@@ -11,7 +11,7 @@
 
 namespace {
 
-// Each glyph in cpcGlyphTable() is an 8x8 pixel grid. It is scaled up by an
+// Each glyph in glyphTable() is an 8x8 pixel grid. It is scaled up by an
 // integer factor on every axis - never through font/image interpolation -
 // so each source pixel stays a crisp, uniform block. The vertical factor is
 // double the horizontal one, matching the CPC's own non-square pixel rows.
@@ -131,7 +131,7 @@ void BasicViewer::rebuildImage(QSize widgetSize)
     m_image.fill(kPaperColor);
 
     QPainter painter(&m_image);
-    const QHash<char32_t, QVector<quint8>> &glyphs = cpcGlyphTable();
+    const QHash<char32_t, QVector<quint8>> &glyphs = glyphTable();
 
     for (int row = 0; row < lines.size(); ++row) {
         const QString &line = lines.at(row);

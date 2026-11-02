@@ -1,6 +1,7 @@
 #include "detokenizer.h"
 #include "basicviewer.h"
 #include "dskimage.h"
+#include "hexviewer.h"
 
 #include <QAction>
 #include <QApplication>
@@ -106,11 +107,6 @@ void showDirectory(QTreeWidget *tree, const DskImage &image)
             QTreeWidgetItem *fileItem = new QTreeWidgetItem(userItem);
             fileItem->setText(0, filename);
             fileItem->setData(0, Qt::UserRole, fileIndex);
-
-            // Only .BAS files can actually be opened; grey out the rest a bit
-            // so it is clear at a glance which ones can't.
-            if (file.extension.compare("BAS", Qt::CaseInsensitive) != 0)
-                fileItem->setForeground(0, tree->palette().color(QPalette::Disabled, QPalette::Text));
         }
     }
 
@@ -318,10 +314,9 @@ int main(int argc, char *argv[])
 
         int fileIndex = item->data(0, Qt::UserRole).toInt();
         const DskFileEntry &fileEntry = currentImage.files().at(fileIndex);
-        if (fileEntry.extension.compare("BAS", Qt::CaseInsensitive) != 0)
-            return;
 
-        QString title = fileEntry.name + "." + fileEntry.extension;
+        QString title = fileEntry.extension.isEmpty() ? fileEntry.name
+                                                        : fileEntry.name + "." + fileEntry.extension;
         for (int i = 0; i < tabs->count(); ++i) {
             if (tabs->tabText(i) == title) {
                 tabs->setCurrentIndex(i);
@@ -329,16 +324,32 @@ int main(int argc, char *argv[])
             }
         }
 
+        QScrollArea *scrollArea = new QScrollArea;
+
+        // Whether this is a BASIC program is determined by the AMSDOS
+        // header's own file type (0 = tokenised, 1 = protected), not by the
+        // file's extension - fileContent() already checks that header.
         bool isTokenized = false;
         QByteArray content = currentImage.fileContent(fileIndex, &isTokenized);
-        QString text = isTokenized ? detokenize(content) : QString::fromLatin1(content);
 
-        BasicViewer *viewer = new BasicViewer;
-        viewer->setText(text);
+        if (isTokenized) {
+            QString text = detokenize(content);
 
-        QScrollArea *scrollArea = new QScrollArea;
-        scrollArea->setWidgetResizable(true);
-        scrollArea->setWidget(viewer);
+            BasicViewer *viewer = new BasicViewer;
+            viewer->setText(text);
+            scrollArea->setWidgetResizable(true);
+            scrollArea->setWidget(viewer);
+        } else {
+            HexViewer *viewer = new HexViewer;
+            viewer->setData(content);
+            // The hex dump has a fixed width/height and never wraps or
+            // grows, so the scroll area should scroll it rather than
+            // resize it. Giving the viewport the same blue background
+            // keeps any extra space around it looking consistent.
+            scrollArea->setWidgetResizable(false);
+            scrollArea->setWidget(viewer);
+            scrollArea->viewport()->setStyleSheet("background-color: rgb(0, 0, 170);");
+        }
 
         int index = tabs->addTab(scrollArea, title);
         tabs->tabBar()->setTabData(index, statusTextForFile(fileEntry));
@@ -357,6 +368,12 @@ int main(int argc, char *argv[])
         QString defaultName = fileEntry.extension.isEmpty() ? fileEntry.name
                                                               : fileEntry.name + "." + fileEntry.extension;
 
+        // Whether this is a BASIC program is determined by the AMSDOS
+        // header's own file type (0 = tokenised, 1 = protected), not by the
+        // file's extension - fileContent() already checks that header.
+        bool isTokenized = false;
+        currentImage.fileContent(fileIndex, &isTokenized);
+
         QMenu menu;
         QAction *saveAsAction = menu.addAction(saveAsIcon, "Save as...");
         QObject::connect(saveAsAction, &QAction::triggered, &window, [&window, fileIndex, defaultName]() {
@@ -371,7 +388,7 @@ int main(int argc, char *argv[])
             }
         });
 
-        if (fileEntry.extension.compare("BAS", Qt::CaseInsensitive) == 0) {
+        if (isTokenized) {
             QAction *exportAction = menu.addAction(exportIcon, "Export...");
             QObject::connect(exportAction, &QAction::triggered, &window, [&window, fileIndex, fileEntry]() {
                 QString defaultTextName = fileEntry.name + ".txt";
@@ -379,9 +396,7 @@ int main(int argc, char *argv[])
                 if (savePath.isEmpty())
                     return;
 
-                bool isTokenized = false;
-                QByteArray content = currentImage.fileContent(fileIndex, &isTokenized);
-                QString text = isTokenized ? detokenize(content) : QString::fromLatin1(content);
+                QString text = detokenize(currentImage.fileContent(fileIndex));
 
                 QFile file(savePath);
                 if (!file.open(QIODevice::WriteOnly) || file.write(text.toLatin1()) < 0) {

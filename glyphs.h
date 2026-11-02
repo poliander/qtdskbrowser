@@ -15,7 +15,7 @@
 #include <QHash>
 #include <QVector>
 
-inline const QHash<char32_t, QVector<quint8>> &cpcGlyphTable()
+inline const QHash<char32_t, QVector<quint8>> &glyphTable()
 {
     static const QHash<char32_t, QVector<quint8>> table = {
         { 0x0000, { 0xFF, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xC3, 0xFF } },

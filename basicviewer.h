@@ -4,7 +4,7 @@
 #include <QWidget>
 
 // Displays text using the CPC464 pixel font's own glyph bitmaps (see
-// cpcglyphs.h), drawn directly pixel by pixel rather than through font
+// glyphs.h), drawn directly pixel by pixel rather than through font
 // rasterisation, each source pixel scaled up by an integer factor.
 //
 // Text wraps to fit however many columns the available width allows, with
