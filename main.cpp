@@ -10,6 +10,7 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFont>
+#include <QHeaderView>
 #include <QIcon>
 #include <QKeySequence>
 #include <QMainWindow>
@@ -83,6 +84,13 @@ private:
     QTreeWidgetItem *m_hoveredItem = nullptr;
 };
 
+// Formats a byte size in KiB with one decimal place and a comma as the
+// decimal separator, e.g. "123,4 KiB".
+QString formatKib(quint32 bytes)
+{
+    return QString::number(bytes / 1024.0, 'f', 1).replace('.', ',') + " KiB";
+}
+
 // Populates the navigation tree: one top-level "USER n" node per user level
 // present on the disk, each with its files as children. The file's index
 // into image.files() is stashed on each child item so it can be looked back
@@ -90,6 +98,9 @@ private:
 void showDirectory(QTreeWidget *tree, const DskImage &image)
 {
     tree->clear();
+
+    QIcon folderIcon = QIcon::fromTheme("folder", QApplication::style()->standardIcon(QStyle::SP_DirIcon));
+    QIcon fileIcon = QIcon::fromTheme("unknown", QApplication::style()->standardIcon(QStyle::SP_FileIcon));
 
     const QVector<DskFileEntry> &files = image.files();
     QMap<int, QVector<int>> fileIndicesByUser; // QMap keeps user numbers in ascending order
@@ -99,6 +110,7 @@ void showDirectory(QTreeWidget *tree, const DskImage &image)
     for (auto it = fileIndicesByUser.constBegin(); it != fileIndicesByUser.constEnd(); ++it) {
         QTreeWidgetItem *userItem = new QTreeWidgetItem(tree);
         userItem->setText(0, QString("USER %1").arg(it.key()));
+        userItem->setIcon(0, folderIcon);
 
         for (int fileIndex : it.value()) {
             const DskFileEntry &file = files.at(fileIndex);
@@ -106,7 +118,10 @@ void showDirectory(QTreeWidget *tree, const DskImage &image)
                                                           : file.name + "." + file.extension;
             QTreeWidgetItem *fileItem = new QTreeWidgetItem(userItem);
             fileItem->setText(0, filename);
+            fileItem->setIcon(0, fileIcon);
             fileItem->setData(0, Qt::UserRole, fileIndex);
+            fileItem->setText(1, formatKib(file.size));
+            fileItem->setTextAlignment(1, Qt::AlignRight | Qt::AlignVCenter);
         }
     }
 
@@ -215,9 +230,15 @@ int main(int argc, char *argv[])
     navHeaderLayout->addWidget(closeFileButton);
 
     QTreeWidget *tree = new QTreeWidget;
-    tree->setHeaderHidden(true);
-    tree->setColumnCount(1);
+    tree->setHeaderLabels({ "Name", "Size" });
+    // As in Dolphin's list view: the name column stretches to take up
+    // whatever width the size column (sized to fit "999,9 KiB") doesn't
+    // need, so both track the panel's width as it is resized.
+    tree->header()->setStretchLastSection(false);
+    tree->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+    tree->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     tree->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    tree->setAlternatingRowColors(true);
     new RowHoverHighlighter(tree);
 
     // A status bar below the tree, showing how much of the disk's capacity

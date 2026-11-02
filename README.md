@@ -1,10 +1,9 @@
 # qtdskbrowser
 
 A Qt6 desktop application for browsing Amstrad CPC `.dsk` disk images. It
-reads the AMSDOS directory (grouped by user number), lets you open `.BAS`
-files directly from the disk, and detokenises/decrypts them (including
-AMSDOS "protected" BASIC) for display in an authentic CPC-style view using
-the original character ROM font.
+lists the AMSDOS directory and lets you view, save or export any file:
+BASIC programs are detokenised in an authentic CPC-style view, everything
+else as a hex dump.
 
 ![qtdskbrowser screenshot](resources/screenshot.png)
 
@@ -101,7 +100,7 @@ cross-toolchain together with a Qt6 build for `win64_mingw`.
 
 ## License notes
 
-The character ROM font data in `cpcglyphs.h` is the Amstrad CPC's own
+The character ROM font data in `glyphs.h` is the Amstrad CPC's own
 bitmap font (not a modern recreation); see
 [`resources/LICENSE-cpc464.txt`](resources/LICENSE-cpc464.txt) for its
 source and licensing details.
