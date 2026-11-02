@@ -28,6 +28,19 @@ public:
     quint8 sideCount() const { return m_sideCount; }
     const QVector<DskFileEntry> &files() const { return m_files; }
 
+    // Total disk capacity available to files, in bytes: the data area minus
+    // the directory itself (always its first 2 KiB: 64 entries of 32 bytes
+    // each), matching what AMSDOS's CAT reports (e.g. 178 KB, not 180 KB, for
+    // the "Data" format).
+    quint32 totalCapacity() const
+    {
+        static const quint32 directoryBytes = 2048;
+        return static_cast<quint32>(m_dataArea.size()) - directoryBytes;
+    }
+
+    // Space already allocated to files, in bytes.
+    quint32 usedSpace() const;
+
     // Reconstructs the content of files().at(index) by following its allocation
     // blocks, with a leading AMSDOS header stripped off if one is present. If
     // isTokenizedBasic is given, it is set to whether the AMSDOS header marks

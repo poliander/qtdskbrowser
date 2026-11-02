@@ -235,6 +235,14 @@ QByteArray DskImage::fileContent(int index, bool *isTokenizedBasic) const
     return content;
 }
 
+quint32 DskImage::usedSpace() const
+{
+    quint32 used = 0;
+    for (const QVector<quint8> &blocks : m_fileBlocks)
+        used += static_cast<quint32>(blocks.size()) * 1024;
+    return used;
+}
+
 QByteArray DskImage::trackData(int trackNumber, int side) const
 {
     for (const Track &track : m_tracks) {

@@ -146,6 +146,17 @@ QString statusTextForFile(const DskFileEntry &file)
     return text;
 }
 
+// The text shown in the status bar below the directory tree: how much of the
+// disk's capacity is occupied by its files, in KiB (rounded up, so even a
+// few used bytes show as at least 1 KB rather than misleadingly as 0).
+QString diskUsageText(const DskImage &image)
+{
+    quint32 usedKb = (image.usedSpace() + 1023) / 1024;
+    quint32 totalKb = (image.totalCapacity() + 1023) / 1024;
+    quint32 freeKb = totalKb - usedKb;
+    return QString("%1 KiB used (%2 KiB free)").arg(usedKb).arg(freeKb);
+}
+
 } // namespace
 
 int main(int argc, char *argv[])
@@ -213,12 +224,19 @@ int main(int argc, char *argv[])
     tree->setEditTriggers(QAbstractItemView::NoEditTriggers);
     new RowHoverHighlighter(tree);
 
+    // A status bar below the tree, showing how much of the disk's capacity
+    // is used; visible only while a disk image is actually open.
+    QLabel *diskUsageLabel = new QLabel;
+    diskUsageLabel->setContentsMargins(6, 2, 6, 2);
+    diskUsageLabel->setVisible(false);
+
     QWidget *navPanel = new QWidget;
     QVBoxLayout *navPanelLayout = new QVBoxLayout(navPanel);
     navPanelLayout->setContentsMargins(0, 0, 0, 0);
     navPanelLayout->setSpacing(0);
     navPanelLayout->addWidget(navHeader);
     navPanelLayout->addWidget(tree, 1);
+    navPanelLayout->addWidget(diskUsageLabel);
 
     // Right: the opened BAS files, grouped in tabs - like an editor area.
     QTabWidget *tabs = new QTabWidget;
@@ -261,7 +279,7 @@ int main(int argc, char *argv[])
 
     static DskImage currentImage;
 
-    auto closeFile = [outerStack, placeholder, tabs, fileNameLabel, &window]() {
+    auto closeFile = [outerStack, placeholder, tabs, fileNameLabel, diskUsageLabel, &window]() {
         while (tabs->count() > 0) {
             QWidget *page = tabs->widget(0);
             tabs->removeTab(0);
@@ -270,6 +288,7 @@ int main(int argc, char *argv[])
         currentImage = DskImage();
         fileNameLabel->clear();
         fileNameLabel->setToolTip(QString());
+        diskUsageLabel->setVisible(false);
         outerStack->setCurrentWidget(placeholder);
         window.setWindowTitle("qtdskbrowser");
     };
@@ -374,7 +393,7 @@ int main(int argc, char *argv[])
         menu.exec(tree->viewport()->mapToGlobal(pos));
     });
 
-    auto openFile = [&window, tree, outerStack, splitter, tabs, fileNameLabel](const QString &filePath) {
+    auto openFile = [&window, tree, outerStack, splitter, tabs, fileNameLabel, diskUsageLabel](const QString &filePath) {
         QFile file(filePath);
         if (!file.open(QIODevice::ReadOnly)) {
             QMessageBox::warning(&window, "qtdskbrowser", "Could not open file:\n" + filePath);
@@ -402,6 +421,8 @@ int main(int argc, char *argv[])
 
         currentImage = std::move(image);
         showDirectory(tree, currentImage);
+        diskUsageLabel->setText(diskUsageText(currentImage));
+        diskUsageLabel->setVisible(true);
         outerStack->setCurrentWidget(splitter);
         window.setWindowTitle("qtdskbrowser - " + filePath);
     };
