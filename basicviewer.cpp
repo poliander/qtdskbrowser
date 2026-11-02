@@ -22,6 +22,11 @@ const int kScaleY = 4;
 const int kCellWidth = kGlyphColumns * kScaleX;
 const int kCellHeight = kGlyphRows * kScaleY;
 
+// A margin the width/height of a single CPC pixel, left showing the paper
+// (blue) background, framing the text on all sides.
+const int kMarginX = kScaleX;
+const int kMarginY = kScaleY;
+
 // The Amstrad CPC's classic default screen colours: yellow text on blue.
 const QColor kPaperColor(0, 0, 170);
 const QColor kPenColor(255, 255, 0);
@@ -70,9 +75,9 @@ int BasicViewer::heightForWidth(int width) const
 {
     if (width <= 0)
         return -1;
-    int columns = qMax(1, width / kCellWidth);
+    int columns = qMax(1, (width - 2 * kMarginX) / kCellWidth);
     int rows = qMax(1, wrapLines(m_text, columns).size());
-    return rows * kCellHeight;
+    return rows * kCellHeight + 2 * kMarginY;
 }
 
 void BasicViewer::setText(const QString &text)
@@ -99,7 +104,7 @@ void BasicViewer::rebuildImage(QSize widgetSize)
         // As many columns as fit the available width; the background and
         // the text wrapping both use this same width so the background is
         // never narrower than the text and never cut off.
-        columns = qMax(1, widgetSize.width() / kCellWidth);
+        columns = qMax(1, (widgetSize.width() - 2 * kMarginX) / kCellWidth);
         lines = wrapLines(m_text, columns);
     } else {
         // No real width yet (before the first layout pass): show the
@@ -119,8 +124,8 @@ void BasicViewer::rebuildImage(QSize widgetSize)
     // At least as big as the widget itself, so the blue background always
     // reaches the window's right and bottom edges, even past a part-column
     // or part-row remainder and even when the listing is short or narrow.
-    int imageWidth = qMax(columns * kCellWidth, widgetSize.width());
-    int imageHeight = qMax(rows * kCellHeight, widgetSize.height());
+    int imageWidth = qMax(columns * kCellWidth + 2 * kMarginX, widgetSize.width());
+    int imageHeight = qMax(rows * kCellHeight + 2 * kMarginY, widgetSize.height());
 
     m_image = QImage(imageWidth, imageHeight, QImage::Format_RGB32);
     m_image.fill(kPaperColor);
@@ -135,8 +140,8 @@ void BasicViewer::rebuildImage(QSize widgetSize)
             if (it == glyphs.constEnd())
                 continue;
 
-            int originX = col * kCellWidth;
-            int originY = row * kCellHeight;
+            int originX = kMarginX + col * kCellWidth;
+            int originY = kMarginY + row * kCellHeight;
             for (int gy = 0; gy < kGlyphRows; ++gy) {
                 quint8 bits = it.value().at(gy);
                 for (int gx = 0; gx < kGlyphColumns; ++gx) {
@@ -166,14 +171,14 @@ void BasicViewer::paintEvent(QPaintEvent *)
     highlight.setAlpha(120);
 
     if (start.y() == end.y()) {
-        painter.fillRect(start.x() * kCellWidth, start.y() * kCellHeight,
+        painter.fillRect(kMarginX + start.x() * kCellWidth, kMarginY + start.y() * kCellHeight,
             (end.x() - start.x()) * kCellWidth, kCellHeight, highlight);
     } else {
-        painter.fillRect(start.x() * kCellWidth, start.y() * kCellHeight,
+        painter.fillRect(kMarginX + start.x() * kCellWidth, kMarginY + start.y() * kCellHeight,
             (m_columns - start.x()) * kCellWidth, kCellHeight, highlight);
         for (int row = start.y() + 1; row < end.y(); ++row)
-            painter.fillRect(0, row * kCellHeight, m_columns * kCellWidth, kCellHeight, highlight);
-        painter.fillRect(0, end.y() * kCellHeight, end.x() * kCellWidth, kCellHeight, highlight);
+            painter.fillRect(kMarginX, kMarginY + row * kCellHeight, m_columns * kCellWidth, kCellHeight, highlight);
+        painter.fillRect(kMarginX, kMarginY + end.y() * kCellHeight, end.x() * kCellWidth, kCellHeight, highlight);
     }
 }
 
@@ -182,8 +187,8 @@ QPoint BasicViewer::textPositionAt(const QPoint &pixelPos) const
     if (m_lines.isEmpty())
         return QPoint(0, 0);
 
-    int row = qBound(0, pixelPos.y() / kCellHeight, m_lines.size() - 1);
-    int col = qBound(0, pixelPos.x() / kCellWidth, m_lines.at(row).size());
+    int row = qBound(0, (pixelPos.y() - kMarginY) / kCellHeight, m_lines.size() - 1);
+    int col = qBound(0, (pixelPos.x() - kMarginX) / kCellWidth, m_lines.at(row).size());
     return QPoint(col, row);
 }
 
