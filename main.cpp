@@ -170,6 +170,9 @@ int main(int argc, char *argv[])
     QIcon saveAsIcon = QIcon::fromTheme("document-save-as",
         app.style()->standardIcon(QStyle::SP_DialogSaveButton));
 
+    QIcon exportIcon = QIcon::fromTheme("document-export",
+        app.style()->standardIcon(QStyle::SP_FileLinkIcon));
+
     QToolButton *placeholderButton = new QToolButton;
     placeholderButton->setIcon(openIcon);
     placeholderButton->setIconSize(QSize(96, 96));
@@ -325,7 +328,7 @@ int main(int argc, char *argv[])
     });
 
     tree->setContextMenuPolicy(Qt::CustomContextMenu);
-    QObject::connect(tree, &QTreeWidget::customContextMenuRequested, tree, [&window, tree, saveAsIcon](const QPoint &pos) {
+    QObject::connect(tree, &QTreeWidget::customContextMenuRequested, tree, [&window, tree, saveAsIcon, exportIcon](const QPoint &pos) {
         QTreeWidgetItem *item = tree->itemAt(pos);
         if (!item || !item->parent())
             return; // no item under the cursor, or a "USER n" group node
@@ -348,6 +351,26 @@ int main(int argc, char *argv[])
                 QMessageBox::warning(&window, "qtdskbrowser", "Could not save file:\n" + savePath);
             }
         });
+
+        if (fileEntry.extension.compare("BAS", Qt::CaseInsensitive) == 0) {
+            QAction *exportAction = menu.addAction(exportIcon, "Export...");
+            QObject::connect(exportAction, &QAction::triggered, &window, [&window, fileIndex, fileEntry]() {
+                QString defaultTextName = fileEntry.name + ".txt";
+                QString savePath = QFileDialog::getSaveFileName(&window, "Export File As", defaultTextName);
+                if (savePath.isEmpty())
+                    return;
+
+                bool isTokenized = false;
+                QByteArray content = currentImage.fileContent(fileIndex, &isTokenized);
+                QString text = isTokenized ? detokenize(content) : QString::fromLatin1(content);
+
+                QFile file(savePath);
+                if (!file.open(QIODevice::WriteOnly) || file.write(text.toLatin1()) < 0) {
+                    QMessageBox::warning(&window, "qtdskbrowser", "Could not export file:\n" + savePath);
+                }
+            });
+        }
+
         menu.exec(tree->viewport()->mapToGlobal(pos));
     });
 
