@@ -201,13 +201,17 @@ int main(int argc, char *argv[])
         app.style()->standardIcon(QStyle::SP_DialogCloseButton));
 
     QTreeWidget *tree = new QTreeWidget;
-    tree->setHeaderLabels({ "Name", "Size" });
+    tree->setHeaderLabels({ "Name", "Size", "" });
     // As in Dolphin's list view: the name column stretches to take up
     // whatever width the size column (sized to fit "999,9 KiB") doesn't
-    // need, so both track the panel's width as it is resized.
+    // need, so both track the panel's width as it is resized. The third
+    // column is just a fixed-width placeholder on the far right for now.
     tree->header()->setStretchLastSection(false);
     tree->header()->setSectionResizeMode(0, QHeaderView::Stretch);
     tree->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    tree->header()->setSectionResizeMode(2, QHeaderView::Fixed);
+    tree->header()->setMinimumSectionSize(2); // the default is much wider than this column
+    tree->setColumnWidth(2, 16);
     tree->setEditTriggers(QAbstractItemView::NoEditTriggers);
     tree->setAlternatingRowColors(true);
     new RowHoverHighlighter(tree);
