@@ -88,6 +88,19 @@ QString formatKib(quint32 bytes)
     return QString::number(bytes / 1024.0, 'f', 1).replace('.', ',') + " KiB";
 }
 
+// A 4-character, Unix-permission-like rendering of a file's AMSDOS
+// attributes: always readable, 'w' unless read-only, 's' for a system
+// file, 'p' for AMSDOS "protected" (encrypted) BASIC - e.g. "rw--", "r---",
+// "rws-", "rw-p".
+QString formatAttributes(const DskFileEntry &file)
+{
+    QString attributes = "r";
+    attributes += file.readOnly ? '-' : 'w';
+    attributes += file.system ? 's' : '-';
+    attributes += file.protectedFile ? 'p' : '-';
+    return attributes;
+}
+
 // Populates the navigation tree: one top-level "USER n" node per user level
 // present on the disk, each with its files as children. The file's index
 // into image.files() is stashed on each child item so it can be looked back
@@ -121,6 +134,8 @@ void showDirectory(QTreeWidget *tree, const DskImage &image)
                 fileItem->setForeground(0, tree->palette().color(QPalette::Disabled, QPalette::Text));
             fileItem->setText(1, formatKib(file.size));
             fileItem->setTextAlignment(1, Qt::AlignRight | Qt::AlignVCenter);
+            fileItem->setText(2, formatAttributes(file));
+            fileItem->setForeground(2, tree->palette().color(QPalette::Disabled, QPalette::Text));
         }
     }
 
@@ -203,15 +218,12 @@ int main(int argc, char *argv[])
     QTreeWidget *tree = new QTreeWidget;
     tree->setHeaderLabels({ "Name", "Size", "" });
     // As in Dolphin's list view: the name column stretches to take up
-    // whatever width the size column (sized to fit "999,9 KiB") doesn't
-    // need, so both track the panel's width as it is resized. The third
-    // column is just a fixed-width placeholder on the far right for now.
+    // whatever width the other columns (each sized to fit their content)
+    // don't need, so all of them track the panel's width as it is resized.
     tree->header()->setStretchLastSection(false);
     tree->header()->setSectionResizeMode(0, QHeaderView::Stretch);
     tree->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
-    tree->header()->setSectionResizeMode(2, QHeaderView::Fixed);
-    tree->header()->setMinimumSectionSize(2); // the default is much wider than this column
-    tree->setColumnWidth(2, 16);
+    tree->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
     tree->setEditTriggers(QAbstractItemView::NoEditTriggers);
     tree->setAlternatingRowColors(true);
     new RowHoverHighlighter(tree);
@@ -260,7 +272,7 @@ int main(int argc, char *argv[])
     splitter->addWidget(editorArea);
     splitter->setStretchFactor(0, 0);
     splitter->setStretchFactor(1, 1);
-    splitter->setSizes({ 320, 580 });
+    splitter->setSizes({ 420, 580 });
 
     QStackedWidget *outerStack = new QStackedWidget;
     outerStack->addWidget(placeholder);
