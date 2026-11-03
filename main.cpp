@@ -117,6 +117,8 @@ void showDirectory(QTreeWidget *tree, const DskImage &image)
             fileItem->setText(0, filename);
             fileItem->setIcon(0, fileIcon);
             fileItem->setData(0, Qt::UserRole, fileIndex);
+            if (file.system)
+                fileItem->setForeground(0, tree->palette().color(QPalette::Disabled, QPalette::Text));
             fileItem->setText(1, formatKib(file.size));
             fileItem->setTextAlignment(1, Qt::AlignRight | Qt::AlignVCenter);
         }
