@@ -266,7 +266,10 @@ int main(int argc, char *argv[])
 
     static DskImage currentImage;
 
-    auto closeFile = [outerStack, placeholder, tabs, diskUsageLabel, &window]() {
+    QAction *closeFileAction = new QAction(closeFileIcon, "Close disk image", &window);
+    closeFileAction->setEnabled(false); // no disk image is open yet
+
+    auto closeFile = [outerStack, placeholder, tabs, diskUsageLabel, closeFileAction, &window]() {
         while (tabs->count() > 0) {
             QWidget *page = tabs->widget(0);
             tabs->removeTab(0);
@@ -274,6 +277,7 @@ int main(int argc, char *argv[])
         }
         currentImage = DskImage();
         diskUsageLabel->setVisible(false);
+        closeFileAction->setEnabled(false);
         outerStack->setCurrentWidget(placeholder);
         window.setWindowTitle("qtdskbrowser");
     };
@@ -395,7 +399,7 @@ int main(int argc, char *argv[])
         menu.exec(tree->viewport()->mapToGlobal(pos));
     });
 
-    auto openFile = [&window, tree, outerStack, splitter, tabs, diskUsageLabel](const QString &filePath) {
+    auto openFile = [&window, tree, outerStack, splitter, tabs, diskUsageLabel, closeFileAction](const QString &filePath) {
         QFile file(filePath);
         if (!file.open(QIODevice::ReadOnly)) {
             QMessageBox::warning(&window, "qtdskbrowser", "Could not open file:\n" + filePath);
@@ -422,6 +426,7 @@ int main(int argc, char *argv[])
         showDirectory(tree, currentImage);
         diskUsageLabel->setText(diskUsageText(currentImage));
         diskUsageLabel->setVisible(true);
+        closeFileAction->setEnabled(true);
         outerStack->setCurrentWidget(splitter);
         window.setWindowTitle("qtdskbrowser - " + filePath);
     };
@@ -438,7 +443,7 @@ int main(int argc, char *argv[])
 
     QObject::connect(placeholderButton, &QToolButton::clicked, openAction, &QAction::trigger);
 
-    QAction *closeFileAction = fileMenu->addAction(closeFileIcon, "Close disk image");
+    fileMenu->addAction(closeFileAction);
     QObject::connect(closeFileAction, &QAction::triggered, &window, closeFile);
 
     fileMenu->addSeparator();
