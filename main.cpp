@@ -8,8 +8,6 @@
 #include <QEvent>
 #include <QFile>
 #include <QFileDialog>
-#include <QFileInfo>
-#include <QFont>
 #include <QHeaderView>
 #include <QIcon>
 #include <QKeySequence>
@@ -17,7 +15,6 @@
 #include <QMap>
 #include <QMenu>
 #include <QMenuBar>
-#include <QHBoxLayout>
 #include <QLabel>
 #include <QMessageBox>
 #include <QScreen>
@@ -128,17 +125,6 @@ void showDirectory(QTreeWidget *tree, const DskImage &image)
     tree->expandAll();
 }
 
-// Shortens a DSK file's name for display as a tab label, keeping only its
-// beginning when it would otherwise be too long.
-QString tabTextForFile(const QString &filePath)
-{
-    static const int maxLength = 20;
-    QString name = QFileInfo(filePath).fileName();
-    if (name.length() > maxLength)
-        name = name.left(maxLength) + "…";
-    return name;
-}
-
 // The text shown in the status bar below the tabs for a file: its size and
 // any attributes it has.
 QString statusTextForFile(const DskFileEntry &file)
@@ -208,26 +194,9 @@ int main(int argc, char *argv[])
     placeholderLayout->addWidget(placeholderButton, 0, Qt::AlignCenter);
     placeholderLayout->addStretch();
 
-    // Left: a navigation panel listing the DSK's directory, with a header
-    // showing which file is open and a button to close it.
-    QLabel *fileNameLabel = new QLabel;
-    QFont fileNameFont = fileNameLabel->font();
-    fileNameFont.setBold(true);
-    fileNameLabel->setFont(fileNameFont);
-
+    // Left: a navigation panel listing the DSK's directory.
     QIcon closeFileIcon = QIcon::fromTheme("document-close",
         app.style()->standardIcon(QStyle::SP_DialogCloseButton));
-    QToolButton *closeFileButton = new QToolButton;
-    closeFileButton->setIcon(closeFileIcon);
-    closeFileButton->setAutoRaise(true);
-    closeFileButton->setToolTip("Close disk image");
-
-    QWidget *navHeader = new QWidget;
-    QHBoxLayout *navHeaderLayout = new QHBoxLayout(navHeader);
-    navHeaderLayout->setContentsMargins(6, 4, 4, 4);
-    navHeaderLayout->addWidget(fileNameLabel);
-    navHeaderLayout->addStretch();
-    navHeaderLayout->addWidget(closeFileButton);
 
     QTreeWidget *tree = new QTreeWidget;
     tree->setHeaderLabels({ "Name", "Size" });
@@ -251,7 +220,6 @@ int main(int argc, char *argv[])
     QVBoxLayout *navPanelLayout = new QVBoxLayout(navPanel);
     navPanelLayout->setContentsMargins(0, 0, 0, 0);
     navPanelLayout->setSpacing(0);
-    navPanelLayout->addWidget(navHeader);
     navPanelLayout->addWidget(tree, 1);
     navPanelLayout->addWidget(diskUsageLabel);
 
@@ -296,21 +264,17 @@ int main(int argc, char *argv[])
 
     static DskImage currentImage;
 
-    auto closeFile = [outerStack, placeholder, tabs, fileNameLabel, diskUsageLabel, &window]() {
+    auto closeFile = [outerStack, placeholder, tabs, diskUsageLabel, &window]() {
         while (tabs->count() > 0) {
             QWidget *page = tabs->widget(0);
             tabs->removeTab(0);
             page->deleteLater();
         }
         currentImage = DskImage();
-        fileNameLabel->clear();
-        fileNameLabel->setToolTip(QString());
         diskUsageLabel->setVisible(false);
         outerStack->setCurrentWidget(placeholder);
         window.setWindowTitle("qtdskbrowser");
     };
-
-    QObject::connect(closeFileButton, &QToolButton::clicked, &window, closeFile);
 
     auto closeTabAt = [tabs](int index) {
         QWidget *page = tabs->widget(index);
@@ -429,7 +393,7 @@ int main(int argc, char *argv[])
         menu.exec(tree->viewport()->mapToGlobal(pos));
     });
 
-    auto openFile = [&window, tree, outerStack, splitter, tabs, fileNameLabel, diskUsageLabel](const QString &filePath) {
+    auto openFile = [&window, tree, outerStack, splitter, tabs, diskUsageLabel](const QString &filePath) {
         QFile file(filePath);
         if (!file.open(QIODevice::ReadOnly)) {
             QMessageBox::warning(&window, "qtdskbrowser", "Could not open file:\n" + filePath);
@@ -452,9 +416,6 @@ int main(int argc, char *argv[])
             page->deleteLater();
         }
 
-        fileNameLabel->setText(tabTextForFile(filePath));
-        fileNameLabel->setToolTip(filePath);
-
         currentImage = std::move(image);
         showDirectory(tree, currentImage);
         diskUsageLabel->setText(diskUsageText(currentImage));
@@ -474,6 +435,9 @@ int main(int argc, char *argv[])
     });
 
     QObject::connect(placeholderButton, &QToolButton::clicked, openAction, &QAction::trigger);
+
+    QAction *closeFileAction = fileMenu->addAction(closeFileIcon, "Close disk image");
+    QObject::connect(closeFileAction, &QAction::triggered, &window, closeFile);
 
     fileMenu->addSeparator();
 
